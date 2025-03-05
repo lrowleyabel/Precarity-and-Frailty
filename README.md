@@ -1,4 +1,4 @@
-# Frailty and Social Risks
+# Precarity and Frailty
 
 
 This is the code for the paper 'Later Life Precarity and Longitudinal Frailty Trajectories in Older Adults'. It produces a Frailty Index and a Later Life Precarity Index in the English Longitudinal Study of Ageing (ELSA). The analysis consists of three stages:
