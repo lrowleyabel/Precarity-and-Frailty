@@ -15,7 +15,7 @@ Description: This file creates variables recording detailed information on each 
 	- invol_job_loss : whether experienced involuntary job loss since the last interview
 	- invol_retired : whether expereienced involuntary retirement since the last interview
 	- left_job_to_care : whether left job to provide care since the last interivew
-	- intensive_unpaid_care : whether currently providing intensive unpaid care (ie: 35+ hours per week)
+	- unpaid_care : whether currently providing intensive unpaid care (ie: 35+ hours per week)
 	- mixed_work_care : whether currently mixing substantial amounts of work and caregiving (ie: at least 20 hours of careginving and 20 hours of employed per week)
 
 */
@@ -54,12 +54,10 @@ forval W = 6/9 {
 	drop if _merge == 2
 	drop _merge
 	
-	// Create indicator of whether respondent is working on a fixed-term contract of less than a year, a fixed-term contract of less than three years, a fixed-term contract of more than three years, or a permnanent contract
+	// Create indicator of whether respondent is working on a fixed-term contract or a permnanent contract
 	gen fixedterm = 0
 	replace fixedterm = 0 if wpcjob == 4
-	replace fixedterm = 0.33 if wpcjob == 3
-	replace fixedterm = 0.66 if wpcjob == 2
-	replace fixedterm = 1 if wpcjob == 1
+	replace fixedterm = 1 if wpcjob == 1 | wpcjob == 2 | wpcjob == 3
 	replace fixedterm = . if wpcjob < -1 | wpcjob == .
 	
 	// Create indicator of working as an agency worker
@@ -103,17 +101,20 @@ forval W = 6/9 {
 	replace left_job_to_care = 1 if  (wpdes == 1 | wpdes == 96) & (wprrmrh == 1 | wpreamrh == 1)
 	replace left_job_to_care = . if wpstj < -1 | wpemp < -1 | wpljomti < -1 | wpwynmti < -1 | wpystmti < -1 | wprrmrh < -1 | wpreamrh< -1
 	
-	// Create indicator of of providing intense unpaid caregiving
-	gen intensive_unpaid_care = .
-	replace intensive_unpaid_care = 1 if ercac >= 35 & ercac < .
-	replace intensive_unpaid_care = 0 if ercac == -1 | (ercac >= 0 & ercac < 35)
+	// Create measure of of providing unpaid caregiving
+	gen unpaid_care = .
+	replace unpaid_care = 1 if ercac == -1
+	replace unpaid_care = 2 if ercac > 0 & ercac < 10
+	replace unpaid_care = 3 if ercac >= 10 & ercac < 35
+	replace unpaid_care = 4 if ercac >= 35 & ercac < .
+	replace unpaid_care = . if ercac == -8
 
 	// Create an indicator of mixing work and unpaid care
 	gen mixed_work_care = .
-	replace mixed_work_care = 1 if ercac >= 20 & ercac < . & r`W'jhours >= 20 & r`W'jhours < .
-	replace mixed_work_care = 0 if (ercac > 0 & ercac < 20) | ercac == -1 | (r`W'jhours != .w & r`W'jhours < 20) | r`W'jhours == .w
+	replace mixed_work_care = 1 if ercac >= 7 & ercac < . & r`W'jhours >= 7 & r`W'jhours < . & ((ercac + r`W'jhours) >= 35)
+	replace mixed_work_care = 0 if (ercac >= 0 & ercac < 7) | ercac == -1 | (r`W'jhours != .w & r`W'jhours < 7) | r`W'jhours == .w | ((ercac + r`W'jhours) >= 0 & (ercac + r`W'jhours) < 35)
 
-	keep idauniq unemployed fixedterm agency_worker selfemployed parttime second_job invol_job_loss invol_retired left_job_to_care intensive_unpaid_care mixed_work_care
+	keep idauniq unemployed fixedterm agency_worker selfemployed parttime second_job invol_job_loss invol_retired left_job_to_care unpaid_care mixed_work_care
 
 	save "..\..\\Data\Processed Data\Employment and Caregiving Variables Wave `W'.dta", replace
 	
@@ -151,13 +152,12 @@ merge 1:1 idauniq using "..\..\Data\Processed Data\Fed Forward Employment and Re
 drop if _merge == 2
 drop _merge
 
-// Create indicator of whether respondent is working on a fixed-term contract of less than a year, a fixed-term contract of less than three years, a fixed-term contract of more than three years, or a permnanent contract
-gen fixedterm = 0
-replace fixedterm = 0 if wpcjob == 4
-replace fixedterm = 0.33 if wpcjob == 3
-replace fixedterm = 0.66 if wpcjob == 2
-replace fixedterm = 1 if wpcjob == 1
-replace fixedterm = . if wpcjob < -1 | wpcjob == .
+// Create indicator of whether respondent is working on a fixed-term contract or a permnanent contract
+	gen fixedterm = 0
+	replace fixedterm = 0 if wpcjob == 4
+	replace fixedterm = 1 if wpcjob == 1 | wpcjob == 2 | wpcjob == 3
+	replace fixedterm = . if wpcjob < -1 | wpcjob == .
+	
 
 
 // Create indicator of working as an agency worker
@@ -238,19 +238,20 @@ foreach v of varlist wpystm1-wpystm5 {
 replace left_job_to_care = . if wpstj < -1 | wpemp < -1 | wpljob1 < -1 | wpwhyn1 < -1 | wpystm1 < -1
 
 
-// Create indicator of of providing intense unpaid caregiving
-gen intensive_unpaid_care = .
-replace intensive_unpaid_care = 1 if ercac >= 35 & ercac < .
-replace intensive_unpaid_care = 0 if ercac == -1 | (ercac >= 0 & ercac < 35)
+// Create measure of of providing unpaid caregiving
+gen unpaid_care = .
+replace unpaid_care = 1 if ercac == -1
+replace unpaid_care = 2 if ercac > 0 & ercac < 10
+replace unpaid_care = 3 if ercac >= 10 & ercac < 35
+replace unpaid_care = 4 if ercac >= 35 & ercac < .
+replace unpaid_care = . if ercac == -8
 
 // Create an indicator of mixing work and unpaid care
 gen mixed_work_care = .
-replace mixed_work_care = 1 if ercac >= 20 & ercac < . & r2jhours >= 20 & r2jhours < .
-replace mixed_work_care = 0 if (ercac > 0 & ercac < 20) | ercac == -1 | (r2jhours != .w & r2jhours < 20) | r2jhours == .w
+replace mixed_work_care = 1 if ercac >= 7 & ercac < . & r2jhours >= 7 & r2jhours < . & ((ercac + r2jhours) >= 35)
+replace mixed_work_care = 0 if (ercac >= 0 & ercac < 7) | ercac == -1 | (r2jhours != .w & r2jhours < 7) | r2jhours == .w | ((ercac + r2jhours) >= 0 & (ercac + r2jhours) < 35)
 
-
-keep idauniq unemployed fixedterm agency_worker selfemployed parttime second_job invol_job_loss invol_retired left_job_to_care intensive_unpaid_care mixed_work_care
-	
+keep idauniq unemployed fixedterm agency_worker selfemployed parttime second_job invol_job_loss invol_retired left_job_to_care unpaid_care mixed_work_care
 
 	
 save "..\..\\Data\Processed Data\Employment and Caregiving Variables Wave 2.dta", replace
@@ -288,13 +289,12 @@ merge 1:1 idauniq using "..\..\Data\Processed Data\Fed Forward Employment and Re
 drop if _merge == 2
 drop _merge
 
-// Create indicator of whether respondent is working on a fixed-term contract of less than a year, a fixed-term contract of less than three years, a fixed-term contract of more than three years, or a permnanent contract
+// Create indicator of whether respondent is working on a fixed-term contract or a permnanent contract
 gen fixedterm = 0
 replace fixedterm = 0 if wpcjob == 4
-replace fixedterm = 0.33 if wpcjob == 3
-replace fixedterm = 0.66 if wpcjob == 2
-replace fixedterm = 1 if wpcjob == 1
+replace fixedterm = 1 if wpcjob == 1 | wpcjob == 2 | wpcjob == 3
 replace fixedterm = . if wpcjob < -1 | wpcjob == .
+
 
 
 // Create indicator of working as an agency worker
@@ -339,18 +339,20 @@ replace left_job_to_care = 1 if  (wpdes == 1 | wpdes == 96) & (wprrmrh == 1 | wp
 replace left_job_to_care = . if wpstj < -1 | wpemp < -1 | wpljomti < -1 | wpwynmti < -1 | wpystmti < -1 | wprrmrh < -1 | wpreamrh< -1
 
 
-//// Create indicator of of providing intense unpaid caregiving
-gen intensive_unpaid_care = .
-replace intensive_unpaid_care = 1 if ercac >= 35 & ercac < .
-replace intensive_unpaid_care = 0 if ercac == -1 | (ercac >= 0 & ercac < 35)
+// Create measure of of providing unpaid caregiving
+gen unpaid_care = .
+replace unpaid_care = 1 if ercac == -1
+replace unpaid_care = 2 if ercac > 0 & ercac < 10
+replace unpaid_care = 3 if ercac >= 10 & ercac < 35
+replace unpaid_care = 4 if ercac >= 35 & ercac < .
+replace unpaid_care = . if ercac == -8
 
 // Create an indicator of mixing work and unpaid care
 gen mixed_work_care = .
-replace mixed_work_care = 1 if ercac >= 20 & ercac < . & r3jhours >= 20 & r3jhours < .
-replace mixed_work_care = 0 if (ercac > 0 & ercac < 20) | ercac == -1 | (r3jhours != .w & r3jhours < 20) | r3jhours == .w
+replace mixed_work_care = 1 if ercac >= 7 & ercac < . & r3jhours >= 7 & r3jhours < . & ((ercac + r3jhours) >= 35)
+replace mixed_work_care = 0 if (ercac >= 0 & ercac < 7) | ercac == -1 | (r3jhours != .w & r3jhours < 7) | r3jhours == .w | ((ercac + r3jhours) >= 0 & (ercac + r3jhours) < 35)
 
-
-keep idauniq unemployed fixedterm agency_worker selfemployed parttime second_job invol_job_loss invol_retired left_job_to_care intensive_unpaid_care mixed_work_care
+keep idauniq unemployed fixedterm agency_worker selfemployed parttime second_job invol_job_loss invol_retired left_job_to_care unpaid_care mixed_work_care
 	
 
 save "..\..\\Data\Processed Data\Employment and Caregiving Variables Wave 3.dta", replace
@@ -387,12 +389,10 @@ merge 1:1 idauniq using "..\..\Data\Processed Data\Fed Forward Employment and Re
 drop if _merge == 2
 drop _merge
 
-// Create indicator of whether respondent is working on a fixed-term contract of less than a year, a fixed-term contract of less than three years, a fixed-term contract of more than three years, or a permnanent contract
+// Create indicator of whether respondent is working on a fixed-term contract or a permnanent contract
 gen fixedterm = 0
 replace fixedterm = 0 if wpcjob == 4
-replace fixedterm = 0.33 if wpcjob == 3
-replace fixedterm = 0.66 if wpcjob == 2
-replace fixedterm = 1 if wpcjob == 1
+replace fixedterm = 1 if wpcjob == 1 | wpcjob == 2 | wpcjob == 3
 replace fixedterm = . if wpcjob < -1 | wpcjob == .
 
 
@@ -437,18 +437,20 @@ replace left_job_to_care = 1  if wpystmrh == 1
 replace left_job_to_care = 1 if  (wpdes == 1 | wpdes == 96) & (wprrmrh == 1 | wpreamrh == 1)
 replace left_job_to_care = . if wpstj < -1 | wpemp < -1 | wpljomti < -1 | wpwynti < -1 | wpystmti < -1 | wprrmrh < -1 | wpreamrh< -1
 
-// Create indicator of of providing intense unpaid caregiving
-gen intensive_unpaid_care = .
-replace intensive_unpaid_care = 1 if ercac >= 35 & ercac < .
-replace intensive_unpaid_care = 0 if ercac == -1 | (ercac >= 0 & ercac < 35)
+// Create measure of of providing unpaid caregiving
+gen unpaid_care = .
+replace unpaid_care = 1 if ercac == -1
+replace unpaid_care = 2 if ercac > 0 & ercac < 10
+replace unpaid_care = 3 if ercac >= 10 & ercac < 35
+replace unpaid_care = 4 if ercac >= 35 & ercac < .
+replace unpaid_care = . if ercac == -8
 
 // Create an indicator of mixing work and unpaid care
 gen mixed_work_care = .
-replace mixed_work_care = 1 if ercac >= 20 & ercac < . & r4jhours >= 20 & r4jhours < .
-replace mixed_work_care = 0 if (ercac > 0 & ercac < 20) | ercac == -1 | (r4jhours != .w & r4jhours < 20) | r4jhours == .w
+replace mixed_work_care = 1 if ercac >= 7 & ercac < . & r4jhours >= 7 & r4jhours < . & ((ercac + r4jhours) >= 35)
+replace mixed_work_care = 0 if (ercac >= 0 & ercac < 7) | ercac == -1 | (r4jhours != .w & r4jhours < 7) | r4jhours == .w | ((ercac + r4jhours) >= 0 & (ercac + r4jhours) < 35)
 
-
-keep idauniq unemployed fixedterm agency_worker selfemployed parttime second_job invol_job_loss invol_retired left_job_to_care intensive_unpaid_care mixed_work_care
+keep idauniq unemployed fixedterm agency_worker selfemployed parttime second_job invol_job_loss invol_retired left_job_to_care unpaid_care mixed_work_care
 	
 	
 save "..\..\\Data\Processed Data\Employment and Caregiving Variables Wave 4.dta", replace
@@ -487,14 +489,12 @@ merge 1:1 idauniq using "..\..\Data\Processed Data\Fed Forward Employment and Re
 drop if _merge == 2
 drop _merge
 
-// Create indicator of whether respondent is working on a fixed-term contract of less than a year, a fixed-term contract of less than three years, a fixed-term contract of more than three years, or a permnanent contract
+// Create indicator of whether respondent is working on a fixed-term contract or a permnanent contract
 gen fixedterm = 0
 replace fixedterm = 0 if wpcjob == 4
-replace fixedterm = 0.33 if wpcjob == 3
-replace fixedterm = 0.66 if wpcjob == 2
-replace fixedterm = 1 if wpcjob == 1
+replace fixedterm = 1 if wpcjob == 1 | wpcjob == 2 | wpcjob == 3
 replace fixedterm = . if wpcjob < -1 | wpcjob == .
-
+	
 
 // Create indicator of working as an agency worker
 gen agency_worker = .
@@ -537,18 +537,20 @@ replace left_job_to_care = 1  if wpystmrh == 1
 replace left_job_to_care = 1 if  (wpdes == 1 | wpdes == 96) & (wprrmrh == 1 | wpreamrh == 1)
 replace left_job_to_care = . if wpstj < -1 | wpemp < -1 | wpljomti < -1 | wpwynti < -1 | wpystmti < -1 | wprrmrh < -1 | wpreamrh< -1
 
-// Create indicator of of providing intense unpaid caregiving
-gen intensive_unpaid_care = .
-replace intensive_unpaid_care = 1 if ercac >= 35 & ercac < .
-replace intensive_unpaid_care = 0 if ercac == -1 | (ercac >= 0 & ercac < 35)
+// Create measure of of providing unpaid caregiving
+gen unpaid_care = .
+replace unpaid_care = 1 if ercac == -1
+replace unpaid_care = 2 if ercac > 0 & ercac < 10
+replace unpaid_care = 3 if ercac >= 10 & ercac < 35
+replace unpaid_care = 4 if ercac >= 35 & ercac < .
+replace unpaid_care = . if ercac == -8
 
 // Create an indicator of mixing work and unpaid care
 gen mixed_work_care = .
-replace mixed_work_care = 1 if ercac >= 20 & ercac < . & r5jhours >= 20 & r5jhours < .
-replace mixed_work_care = 0 if (ercac > 0 & ercac < 20) | ercac == -1 | (r5jhours != .w & r5jhours < 20) | r5jhours == .w
+replace mixed_work_care = 1 if ercac >= 7 & ercac < . & r5jhours >= 7 & r5jhours < . & ((ercac + r5jhours) >= 35)
+replace mixed_work_care = 0 if (ercac >= 0 & ercac < 7) | ercac == -1 | (r5jhours != .w & r5jhours < 7) | r5jhours == .w | ((ercac + r5jhours) >= 0 & (ercac + r5jhours) < 35)
 
-
-keep idauniq unemployed fixedterm agency_worker selfemployed parttime second_job invol_job_loss invol_retired left_job_to_care intensive_unpaid_care mixed_work_care
+keep idauniq unemployed fixedterm agency_worker selfemployed parttime second_job invol_job_loss invol_retired left_job_to_care unpaid_care mixed_work_care
 	
 save "..\..\\Data\Processed Data\Employment and Caregiving Variables Wave 5.dta", replace
 

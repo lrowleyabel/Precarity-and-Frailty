@@ -16,13 +16,14 @@ clear
 set maxvar 20000
 
 // Set working directory to current file's location (ammend as necessary)
-cd ""
+cd "C:\Users\lrowley\OneDrive - University of Edinburgh\Published Paper GitHub Repositories\New Frailty and Social Risks\Data Preparation\Calculating Social Risks"
+
 
 
 // Read in Harmonised ELSA dataset
 use "..\..\Data\Raw Data\UKDA-5050-stata\stata\stata13_se\h_elsa_g3.dta", clear
 
-// For waves 1 to 9, read in the IFS Finicial data and calculate the non-benefit income and then equivalise to the household size
+// For waves 1 to 9, read in the IFS Finicial data and calculate the income equivalised to household size
 forval W = 1/9 {
 	
 	merge 1:1 idauniq using "..\..\Data\Raw Data\UKDA-5050-stata\stata\stata13_se\IFS Data\ELSA IFS Financial Wave `W'.dta", keepusing(idauniq totinc_bu_s beninc_bu_s bueq)
@@ -31,7 +32,7 @@ forval W = 1/9 {
 	
 	mvdecode totinc_bu_s beninc_bu_s, mv(-999 -998 -995)
 	
-	gen income_w`W' = totinc_bu_s - beninc_bu_s
+	gen income_w`W' = totinc_bu_s
 	
 	gen eq_income_w`W' = income_w`W' / bueq
 

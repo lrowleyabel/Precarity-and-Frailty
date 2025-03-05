@@ -19,7 +19,7 @@ clear all
 set maxvar 20000
 
 // Set the working directory to current file's location (ammend as necessary)
-cd ""
+cd "C:\Users\lrowley\OneDrive - University of Edinburgh\Published Paper GitHub Repositories\New Frailty and Social Risks\Data Preparation\Calculating Frailty Index"
 
 // Read in the Harmonised ELSA Dataset
 use "..\..\Data\Raw Data\UKDA-5050-stata\stata\stata13_se\h_elsa_g3.dta", clear
@@ -292,8 +292,6 @@ forval W = 1/9 {
 
 forval W = 1/9 {
 
-    xtile income_quintile_w`W' = h`W'itot, nq(5)
-    xtile wealth_quintile_w`W' = h`W'atotb, nq(5)
     rename r`W'agey age_w`W'
     rename r`W'mstath marstat_w`W'
     
@@ -322,12 +320,12 @@ rename rabplace pob
 // Keep the ID variable, the calculated Frailty Index, the common socio-demographic variables and the longitudinal weights for Wave 9
 keep idauniq ///
      frailty_index_wave_* ///
-     gender age_w* age_group_w* race h*itot h*atotb income_quintile* wealth_quintile* education pob marstat* ///
+     gender age_w* age_group_w* race h*itot h*atotb education pob marstat* ///
      r9lwtresp
 
 order idauniq ///
 	  frailty_index_wave_* ///
-      gender age_w* age_group_w* race h*itot h*atotb income_quintile* wealth_quintile* education pob marstat* ///
+      gender age_w* age_group_w* race h*itot h*atotb education pob marstat* ///
       r9lwtresp
 	 
 // Save the dataset

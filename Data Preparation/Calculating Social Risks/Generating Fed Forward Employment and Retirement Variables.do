@@ -19,7 +19,7 @@ clear
 set maxvar 20000
 
 // Set working directory to current file's location (ammend as necessary)
-cd ""
+cd "C:\Users\lrowley\OneDrive - University of Edinburgh\Published Paper GitHub Repositories\New Frailty and Social Risks\Data Preparation\Calculating Social Risks"
 
 // Read in Wave 1 data
 use "..\..\Data\Raw Data\UKDA-5050-stata\stata\stata13_se\Main Data\ELSA Wave 1.dta", clear
