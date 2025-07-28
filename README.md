@@ -61,7 +61,9 @@ This is the code for the paper 'Later Life Precarity and Longitudinal Frailty Tr
     - _Sensitivity Analyses - Model 5 Multicollinearity Check.do_
     - _Sensitivity Analyses - Plotting Model 5 Coefficients.R_
   - We run weighted versions of the main models (Models 2 - 4):
-    - _Sensitivity Analyses - Weighted Models 2 - 4.do_    
+    - _Sensitivity Analyses - Weighted Models 2 - 4.do_
+  - We run a version of Model 4 with wealth quintiles instead of wealth percentiles
+    - _Sensitivity Analyses - Model 9 Wealth Quintiles.R_    
 
 ### Further Code:
 
