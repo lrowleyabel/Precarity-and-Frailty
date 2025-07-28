@@ -8,10 +8,16 @@ rm(list = ls())
 # Read in frailty data with social risk markers
 full_df<- readstata13::read.dta13("../Data/Processed Data/ELSA Frailty and Social Risks Analysis Dataset.dta", nonint.factors = T)
 
-# Drop those below 50
+# Filter to just Waves 2 - 9
 full_df<- full_df%>%
-  filter(age >= 50)
+  filter(wave >= 2 & wave <= 9)
 
+# Filter to only waves where an individual responded
+full_df<- full_df%>%
+  filter(inw == "1.resp,alive")
+
+# Look at the total number of individuals interviewed across Waves 2 - 9
+n_distinct(full_df$idauniq)
 
 # Drop any rows with missing frailty outcome
 df<- full_df%>%
@@ -37,6 +43,11 @@ n_distinct(full_df$idauniq)
 n_distinct(df$idauniq)
 
 
+# For the purpose of comparing the full and analytic samples descriptive sttistics, we exclude individuals aged under 50 from the full sample too
+full_df<- full_df%>%
+  filter(age >= 50)
+
+# Rename the wealth and income variables
 full_df<- full_df%>%
   rename(wealth = hatotb,
          income = hitot)
@@ -45,63 +56,21 @@ df<- df%>%
   rename(wealth = hatotb,
          income = hitot)
 
+# Create a dataset with the both the full and analytic sample
+full_and_analytic_df<- rbind(full_df%>%
+                               filter(inw == "1.resp,alive")%>%
+                               group_by(idauniq)%>%
+                               slice_min(wave, n = 1)%>%
+                               ungroup()%>%
+                               select(all_of(colnames(df)))%>%
+                               mutate(dataset = "full"), df%>%
+                               group_by(idauniq)%>%
+                               slice_min(wave, n = 1)%>%
+                               ungroup()%>%
+                               mutate(dataset = "analytic"))
 
-full_sample_cont_variables<- full_df%>%
-  filter(inw == "1.resp,alive")%>%
-  group_by(idauniq)%>%
-  slice_min(wave, n = 1)%>%
-  ungroup()%>%
-  summarise(across(c(age, frailty_index, wealth, income), list(mean = ~mean(.x, na.rm = T)), .names = "{.col}__{.fn}"))%>%
-  pivot_longer(cols = everything(), names_to = "name", values_to = "full_sample_value")%>%
-  separate_wider_delim(cols = name, names = c("variable", "statistic"), delim = "__")
+# Look at the descriptive statistics for the continuous variables in the full and analytic datasets and test the difference
+tableone::CreateContTable(data = full_and_analytic, vars = c("age", "frailty_index", "wealth", "income"), strata = "dataset")
 
-analytic_sample_cont_variables<- df%>%
-  group_by(idauniq)%>%
-  slice_min(wave, n = 1)%>%
-  ungroup()%>%
-  summarise(across(c(age, frailty_index, wealth, income), list(mean = ~mean(.x, na.rm = T)), .names = "{.col}__{.fn}"))%>%
-  pivot_longer(cols = everything(), names_to = "name", values_to = "analytic_sample_value")%>%
-  separate_wider_delim(cols = name, names = c("variable", "statistic"), delim = "__")
-
-
-cont_variables<- left_join(full_sample_cont_variables, analytic_sample_cont_variables)
-
-
-cont_variables%>%
-  gt()%>%
-  fmt_number(decimals = 2)
-
-
-full_sample_cat_variables<- full_df%>%
-  filter(inw == "1.resp,alive")%>%
-  group_by(idauniq)%>%
-  slice_min(wave, n = 1)%>%
-  ungroup()%>%
-  count(gender)%>%
-  mutate(proportion = 100*n/sum(n))%>%
-  select(-n)%>%
-  pivot_longer(cols = c(proportion), names_to = "statistic", values_to = "full_sample_value")%>%
-  rename(variable = gender)
-
-
-analytic_sample_cat_variables<- df%>%
-  group_by(idauniq)%>%
-  slice_min(wave, n = 1)%>%
-  ungroup()%>%
-  count(gender)%>%
-  mutate(proportion = 100*n/sum(n))%>%
-  select(-n)%>%
-  pivot_longer(cols = c(proportion), names_to = "statistic", values_to = "analytic_sample_value")%>%
-  rename(variable = gender)
-
-cat_variables<- left_join(full_sample_cat_variables, analytic_sample_cat_variables)
-
-cat_variables%>%
-  gt()%>%
-  fmt_number(decimals = 2)
-
-tbl<- rbind(cont_variables, cat_variables)
-
-tbl%>%
-  gt()%>%
-  fmt_number(decimals = 2)
+# Look at the descriptive statistics for the categorical variable in the full and analytic datasets and test the difference
+tableone::CreateCatTable(data = full_and_analytic, vars = c("gender"), strata = "dataset")
